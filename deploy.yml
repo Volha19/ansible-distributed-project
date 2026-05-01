@@ -1,0 +1,78 @@
+
+- name: Deploy .NET application artifact
+  hosts: app_servers
+  become: yes
+  
+  vars_files:
+    - secrets.yml
+
+  tasks:
+    - name: Step 1 - Make sure we have the decompression tool
+      apt:
+        name: unzip
+        state: present
+
+    - name: Step 2 - Create a clean directory for our application
+      file:
+        path: /var/www/backend
+        state: directory
+        mode: '0755'
+
+    - name: Step 3 - Download and unpack the ready artifact (.zip) from the network
+      unarchive:
+        src: http://edu.balsamski.pl/Code.zip
+        dest: /var/www/backend
+        remote_src: yes # Informs that the source file is on the internet, not on your laptop!
+        
+    - name: Step 4 - Configure the systemd daemon for the .NET application
+      copy:
+        dest: /etc/systemd/system/backend.service
+        content: |
+          [Unit]
+          Description=Main .NET application of my project
+          After=network.target
+
+          [Service]
+          WorkingDirectory=/var/www/backend/Code/Backend
+          # Run the main compiled application file (replace the name with your own)
+          ExecStart=/usr/bin/dotnet /var/www/backend/Code/Backend/Backend.dll
+          Restart=always
+          RestartSec=10
+          SyslogIdentifier=backend_logs
+      
+          # Basic environment variables
+          Environment="ASPNETCORE_ENVIRONMENT=Production"
+          Environment="ASPNETCORE_URLS=http://localhost:5000"
+
+          # -----------------------------------------------------
+          # INJECTING DATA FROM ANSIBLE VAULT
+          # Notice how we build the Connection Strings!
+          # -----------------------------------------------------
+          
+          # POSTGRES (ADO.NET format)
+          Environment="ConnectionStrings__Postgres=Host={{ vault_db_host }};Database={{ vault_db_name }};Username={{ vault_db_user }};Password={{ vault_db_password }}"
+          
+          # REDIS (StackExchange.Redis format)
+          Environment="ConnectionStrings__Redis=localhost,password={{ vault_redis_password }}"
+          
+          # RABBITMQ (AMQP URI format)
+          Environment="ConnectionStrings__RabbitMq=amqp://{{ vault_rabbit_user }}:{{ vault_rabbit_password }}@localhost:5672/"
+          
+          # MINIO
+          Environment="Minio__Endpoint={{ vault_minio_endpoint }}"
+          Environment="Minio__RootUser={{ vault_minio_root_user }}"
+          Environment="Minio__RootPassword={{ vault_minio_root_password }}"
+          Environment="Minio__BucketName={{ vault_minio_bucket_name }}"
+          
+          # CORS
+          Environment="Cors__AllowedOrigins={{ vault_cors_origins }}"
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Step 5 - Start the application in the background
+      systemd:
+        name: backend
+        state: restarted 
+        enabled: yes
+        daemon_reload: yes

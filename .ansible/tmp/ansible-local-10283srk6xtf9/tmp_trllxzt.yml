@@ -1,0 +1,12 @@
+vault_redis_password: "VerySecretRedisPassword789"
+vault_rabbit_user: "admin_devops"
+vault_rabbit_password: "RabbitInTheSafe456"
+vault_db_name: "production_db"
+vault_db_user: "db_admin"
+vault_db_password: "StrongPostgresPassword321"
+
+vault_minio_root_user: "admin"
+vault_minio_root_password: "Student123!"
+vault_minio_bucket_name: "my-photos"
+vault_minio_endpoint: "http://localhost:9000" 
+vault_cors_origins: "http://localhost"

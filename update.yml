@@ -1,0 +1,12 @@
+- name: First automation - system update
+  hosts: all
+  become: yes # Means in Ansible: "use sudo privileges"
+  
+  tasks:
+    - name: Step 1 - Refresh the list of available packages (equivalent of apt update)
+      apt:
+        update_cache: yes
+
+    - name: Step 2 - Install the latest versions of software (equivalent of apt upgrade)
+      apt:
+        upgrade: yes

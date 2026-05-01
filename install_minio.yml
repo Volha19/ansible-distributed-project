@@ -1,0 +1,41 @@
+
+- name: Installation and configuration of MinIO object storage
+  hosts: app_servers
+  become: yes
+  
+  tasks:
+    - name: Step 1 - Download the executable directly from the network
+      get_url:
+        url: https://dl.min.io/server/minio/release/linux-amd64/minio
+        dest: /usr/local/bin/minio
+        mode: '0755' # Grants the file "execute" permissions (like chmod +x)
+
+    - name: Step 2 - Create a directory on disk for data (buckets)
+      file:
+        path: /mnt/data/minio
+        state: directory
+        mode: '0755'
+
+    - name: Step 3 - Create a service definition for the Linux system (Systemd)
+      copy:
+        dest: /etc/systemd/system/minio.service
+        content: |
+          [Unit]
+          Description=MinIO Object Storage
+          After=network.target
+
+          [Service]
+          Environment="MINIO_ROOT_USER=admin"
+          Environment="MINIO_ROOT_PASSWORD=Student123!"
+          ExecStart=/usr/local/bin/minio server /mnt/data/minio --console-address ":9001"
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Step 4 - Start MinIO in the background and add it to autostart
+      systemd:
+        name: minio
+        state: started     # "Start now"
+        enabled: yes       # "Start automatically after server restart"
+        daemon_reload: yes # "Register our new file from Step 3"

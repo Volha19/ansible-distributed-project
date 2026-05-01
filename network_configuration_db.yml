@@ -1,0 +1,52 @@
+
+- name: Network and firewall configuration for the database
+  hosts: db_servers
+  become: yes
+  vars:
+    # IP of your application server (retrieved from the app_servers group)
+    app_server_ip: "{{ hostvars[groups['app_servers'][0]]['ansible_host'] }}"
+  tasks:
+    - name: UFW | Ensure UFW is installed
+      apt:
+        name: ufw
+        state: present
+        update_cache: yes   
+    - name: DB | Allow Postgres to listen on all interfaces
+      lineinfile:
+        path: /etc/postgresql/13/main/postgresql.conf # Check the version (e.g., 14, 15, 16)
+        regexp: "^#?listen_addresses ="
+        line: "listen_addresses = '*'"
+      notify: Restart Postgres
+
+    - name: DB | Add pg_hba.conf entry allowing login from app IP
+      lineinfile:
+        path: /etc/postgresql/13/main/pg_hba.conf
+        line: "host all all {{ app_server_ip }}/32 md5"
+      notify: Restart Postgres
+
+    # --- FIREWALL CONFIGURATION (UFW) ---
+
+    - name: UFW | Allow SSH traffic (TO NOT LOSE ACCESS!)
+      community.general.ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+
+    - name: UFW | Allow Postgres access (5432) ONLY from the application server
+      community.general.ufw:
+        rule: allow
+        port: '5432'
+        proto: tcp
+        from_ip: "{{ app_server_ip }}"
+
+    - name: UFW | Enable firewall and set default incoming traffic blocking
+      community.general.ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+  handlers:
+    - name: Restart Postgres
+      service:
+        name: postgresql
+        state: restarted

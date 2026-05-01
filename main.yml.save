@@ -1,0 +1,9 @@
+- import_playbook: install_minio.yml
+# =============================================
+# Full name: Volha Hryshkevich
+# Student ID number: 237714
+# =============================================
+- import_playbook: update.yml
+- import_playbook: install_git.yml
+- import_playbook: install_dev_tools.yml
+- import_playbook: install_minio.yml

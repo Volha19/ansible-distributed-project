@@ -1,0 +1,67 @@
+- name: PostegreSQL on Database Server
+  hosts: db_servers
+  become: yes
+  vars_files:
+    - secrets.yml # Load our encrypted file
+
+  tasks:
+    - name: Step 0 - Install the ACL package (required for user switching)
+      apt:
+        name: acl
+        state: present
+
+    - name: Step 1 - Install Postgres and Python driver
+      apt:
+        name: 
+          - postgresql
+          - python3-psycopg2
+        state: present 
+
+    - name: Step 2 - Create the database user
+      community.postgresql.postgresql_user:
+        name: "{{ vault_db_user }}"
+        password: "{{ vault_db_password }}"
+        role_attr_flags: "NOSUPERUSER,CREATEDB"
+      become_user: postgres
+ 
+- name: Configure Redis and RabbitMQ in App Server
+  hosts: app_servers
+  become: yes
+  vars_files:
+    - secrets.yml # Load our encrypted file
+  tasks:   
+    # --- REDIS ---
+    - name: REDIS | Set password from vault
+      lineinfile:
+        path: /etc/redis/redis.conf
+        regexp: '^# requirepass|^requirepass '
+        line: "requirepass {{ vault_redis_password }}"
+      notify: Restart Redis
+
+    # --- RABBITMQ ---
+    - name: RABBITMQ | Add administrator from Vault
+      command: rabbitmqctl add_user {{ vault_rabbit_user }} {{ vault_rabbit_password }}
+      ignore_errors: yes
+
+    - name: RABBITMQ | Grant permissions to admin
+      command: rabbitmqctl set_user_tags {{ vault_rabbit_user }} administrator
+
+    # --- POSTGRESQL ---
+    - name: POSTGRES | Install driver
+      apt: { name: python3-psycopg2, state: present }
+
+    - name: POSTGRES | Create user from Vault
+      community.postgresql.postgresql_user:
+        name: "{{ vault_db_user }}"
+        password: "{{ vault_db_password }}"
+      become_user: postgres
+
+    - name: POSTGRES | Create database
+      community.postgresql.postgresql_db:
+        name: "{{ vault_db_name }}"
+        owner: "{{ vault_db_user }}"
+      become_user: postgres
+
+  handlers:
+    - name: Restart Redis
+      service: { name: redis-server, state: restarted }

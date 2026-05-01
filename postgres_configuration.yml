@@ -1,0 +1,27 @@
+
+- name: PostgreSQL database configuration
+  hosts: db_servers
+  become: yes
+  tasks:
+    - name: DB | Install ACL (required for become_user)
+      apt:
+        name: acl
+        state: present
+
+    - name: DB | Install PostgreSQL
+      apt:
+        name: postgresql
+        state: present
+
+    - name: DB | Allow Postgres to listen on all interfaces
+      lineinfile:
+        path: /etc/postgresql/14/main/postgresql.conf
+        regexp: "^#?listen_addresses ="
+        line: "listen_addresses = '*'"
+      notify: Restart Postgres
+
+  handlers:
+    - name: Restart Postgres
+      service:
+        name: postgresql
+        state: restarted

@@ -1,0 +1,15 @@
+server {
+    listen 80;
+    
+    # Ansible will automatically substitute the IP address or name from the hosts.ini file here!
+    server_name {{ ansible_host }}; 
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection keep-alive;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}

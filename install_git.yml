@@ -1,0 +1,9 @@
+- name: Install the Git tool
+  hosts: app_servers
+  become: yes
+  
+  tasks:
+    - name: Install the git package using the APT package manager
+      apt:
+        name: git
+        state: present
