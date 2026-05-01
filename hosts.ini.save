@@ -1,2 +1,0 @@
-[app_servers]
-main_node ansible_host=20.100.172.111main_node ansible_host=20.100.172.111 ansible_user=Hryshkevich ansible_user=Hryshkevich

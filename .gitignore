@@ -1,3 +1,11 @@
-.vault_pass
-*.retry
+*
 
+!*.yml
+!*.ini
+!*.j2
+!templates/
+!secrets.yml
+!.gitignore
+
+*.save
+*.swp
