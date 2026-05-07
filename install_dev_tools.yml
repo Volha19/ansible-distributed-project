@@ -17,7 +17,6 @@
         state: present
         update_cache: yes
 
-    # УБРАЛИ ТИРЕ ОТСЮДА (теперь это часть списка tasks)
     - name: Step 1 - Download the Microsoft repository configuration
       get_url:
         url: "https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb"
