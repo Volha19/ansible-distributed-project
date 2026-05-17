@@ -5,6 +5,8 @@
   tasks:
     - name: Step 1 - Refresh the list of available packages (equivalent of apt update)
       apt:
+        name: acl
+        state: present
         update_cache: yes
 
     - name: Step 2 - Install the latest versions of software (equivalent of apt upgrade)

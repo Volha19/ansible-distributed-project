@@ -9,3 +9,8 @@
 
 *.save
 *.swp
+
+!terraform/
+!*.tf
+*.save
+*.swp
