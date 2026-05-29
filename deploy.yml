@@ -35,7 +35,7 @@
           [Service]
           WorkingDirectory=/var/www/backend/Code/Backend
           # Run the main compiled application file (replace the name with your own)
-          ExecStart=/usr/bin/dotnet /var/www/backend/Code/Backend/Backend.dll
+          ExecStart=/usr/share/dotnet/dotnet /var/www/backend/Code/Backend/Backend.dll
           Restart=always
           RestartSec=10
           SyslogIdentifier=backend_logs
